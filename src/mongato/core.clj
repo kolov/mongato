@@ -71,7 +71,6 @@
 (defn all-mongo-collections [] (vals @collections))
 
 
-
 (defmacro defcollection
   ([col-name mongo-col-name]
    `(do (swap! collections #(assoc % '~col-name ~mongo-col-name))
@@ -79,12 +78,12 @@
         ))
   ([col-name] `(defcollection ~col-name ~(str col-name))  ))
 
+(defmacro deffinder [col-name field]
+  `(defn ~(symbol (str "find-" col-name "-by-" field)) [v#]
+     find-one-as-tmap { ~(keyword field) v#}))
 
+(defmacro deflist [col-name]
+  `(defn ~(symbol (str "list-" col-name)) []  (find-tmaps ~col-name {})))
 
-
-;; for each entity xxx:
-;; list-xxx - lists all
-;; find-xxx
-;;
 
 

@@ -1,15 +1,20 @@
 (ns mongato.core
+  (:import (com.mongodb MongoClient)
+           (java.math BigInteger))
   (:require [monger.core :as mg]
             [monger.collection :as mc]
             [monger.conversion :refer [from-db-object ConvertToDBObject]]
             [monger.operators :refer :all]
             [clojure.java.io :as io]
+            [mongato.util :refer :all]
+            [clojure.core.typed :refer :all]
             )
   (:import [com.mongodb MongoOptions ServerAddress]
            [org.bson.types ObjectId]
-           [java.math BigInteger]
-           [java.security MessageDigest]
-           [java.io PushbackReader])
+           (java.io PushbackReader)
+           (java.security MessageDigest)
+           (com.mongodb MongoClient)
+           )
   )
 
 
@@ -20,7 +25,6 @@
          (with-open [r (io/reader (io/resource location))]
            (read (PushbackReader. r))))
        (catch Exception e (println "Could not read resource " location))))
-
 
 (defn connect-with-params [db-config]
   "Connect to Mongodb from a map with parameters"
@@ -33,34 +37,14 @@
   (connect-with-params (conf location)))
 
 
-;; general
-; Copied from https://github.com/pmj/clojure-util/blob/master/util.clj
-
-(defn- repeat-str
-  "Concatenate num repetitions of rep-sc."
-  [rep-sc num]
-  (apply str (map (constantly rep-sc) (range 0 num))))
-
-(defn bytes-to-hex
-  "Returns a string of hex digits representing the given byte array. The string will always contain 2 digits for every byte, including any necessary leading zeroes."
-  [byte-array]
-  (let
-      [hex (. (BigInteger. 1 byte-array) (toString 16))
-       delta-len (- (* 2 (count byte-array)) (count hex))]
-    (if (= 0 delta-len)
-      hex
-      (str (repeat-str "0" delta-len) hex))))
-
-(defn sha1 [obj]
-  (->> (.getBytes (.toString obj)) (.digest (MessageDigest/getInstance "SHA1")) bytes-to-hex))
 
 ;; Maps with type key
 
-(def type-keyword :type)
+(def TYPE ::type)
 
 (defn mark-type
   "Adds a :type entry"
-  [map type] (assoc map #'type-keyword type))
+  [map type] (vary-meta map TYPE type))
 
 (defn find-one-as-tmap [coll ref]
   "Variation on find-one-as-map, returning a map with a :type entry collection name"
@@ -73,24 +57,28 @@
   )
 
 
-
-
-
 ;-- db access
 (defn get-doc-by-field [table f-name f-val]
   "Get record by field f-name"
   (let [result (find-one-as-tmap table {f-name f-val})]
     result))
 
-(def ALL-TABLES
+(def ^{:private true} collections
   "Contains the names of all table created with deftable"
-  (atom []))
+  (atom {}))
 
-(defmacro deftable
-  ([col-name table-name]
-   `(do (def ~col-name ~table-name)
-        (swap! ALL-TABLES #(conj % ~col-name))))
-  ([name] (deftable name (name col-name))) )
+(defn all-collections [] (keys @collections))
+(defn all-mongo-collections [] (vals @collections))
+
+
+
+(defmacro defcollection
+  ([col-name mongo-col-name]
+   `(do (swap! collections #(assoc % '~col-name ~mongo-col-name))
+        (def ~col-name ~mongo-col-name)
+        ))
+  ([col-name] `(defcollection ~col-name ~(str col-name))  ))
+
 
 
 
@@ -98,6 +86,5 @@
 ;; list-xxx - lists all
 ;; find-xxx
 ;;
-
 
 

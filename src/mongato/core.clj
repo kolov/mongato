@@ -46,44 +46,39 @@
   "Adds a :type entry"
   [map type] (vary-meta map TYPE type))
 
-(defn find-one-as-tmap [coll ref]
+
+(defrecord m-collection [mongo-col-name])
+(defmacro defcollection
+  ([col-name mongo-col-name]
+   `(def ~col-name (->m-collection ~mongo-col-name) {::type ::collection}))
+  ([col-name] `(defcollection ~col-name ~(str col-name))))
+;-- db access
+
+
+(defn find-one-as-tmap [mcoll ref]
   "Variation on find-one-as-map, returning a map with a :type entry collection name"
-  (if-let [found (mc/find-one-as-map coll ref)] (mark-type found coll)))
+  (if-let [found (mc/find-one-as-map (:mongo-col-name mcoll) ref)] (mark-type found mcoll)))
 
 (defn find-tmaps
-  ([coll ref & fields]
+  ([mcoll ref & fields]
    "Variation on find-maps, returning maps with a :type entry"
-   (map #(mark-type % coll) (apply mc/find-maps coll ref fields)))
+   (map #(mark-type % mcoll) (apply mc/find-maps (:mongo-col-name mcoll) ref fields)))
   )
 
+(defn save-and-return-tmap
+  [mcoll doc]
+  "Variation on save-and-return, returning map with a :type entry"
+  (-> (mc/save-and-return (:mongo-col-name mcoll) doc) (mark-type mcoll)))
 
-;-- db access
+
 (defn get-doc-by-field [table f-name f-val]
   "Get record by field f-name"
   (let [result (find-one-as-tmap table {f-name f-val})]
     result))
 
-(def ^{:private true} collections
-  "Contains the names of all table created with deftable"
-  (atom {}))
-
-(defn all-collections [] (keys @collections))
-(defn all-mongo-collections [] (vals @collections))
 
 
-(defmacro defcollection
-  ([col-name mongo-col-name]
-   `(do (swap! collections #(assoc % '~col-name ~mongo-col-name))
-        (def ~col-name ~mongo-col-name)
-        ))
-  ([col-name] `(defcollection ~col-name ~(str col-name))  ))
 
-(defmacro deffinder [col-name field]
-  `(defn ~(symbol (str "find-" col-name "-by-" field)) [v#]
-     find-one-as-tmap { ~(keyword field) v#}))
-
-(defmacro deflist [col-name]
-  `(defn ~(symbol (str "list-" col-name)) []  (find-tmaps ~col-name {})))
 
 
 

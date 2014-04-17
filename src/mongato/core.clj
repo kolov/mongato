@@ -48,12 +48,32 @@
 
 
 (defrecord m-collection [mongo-col-name])
-(defmacro defcollection
-  ([col-name mongo-col-name]
-   `(def ~col-name (->m-collection ~mongo-col-name) {::type ::collection}))
-  ([col-name] `(defcollection ~col-name ~(str col-name))))
-;-- db access
 
+
+(defmacro defdata [col-name & references]
+  (let [process-reference
+        (fn [[kname & args]]
+          `(~(symbol "clojure.core" (clojure.core/name kname))
+            ~@(map #(list 'quote %) args)))
+        mongo-col-name-string (when (string? (first references)) (first references))
+        references (if mongo-col-name-string (next references) references)
+        mongo-col-name (if mongo-col-name-string
+                         mongo-col-name-string
+                         (str col-name))
+        metadata (when (map? (first references)) (first references))
+        references (if metadata (next references) references)
+        name (if metadata
+               (vary-meta name merge metadata)
+               name)
+        gen-class-clause (first (filter #(= :gen-class (first %)) references))
+        gen-class-call
+        (when gen-class-clause
+          (list* `gen-class :name (.replace (str name) \- \_) :impl-ns name :main true (next gen-class-clause)))
+        references (remove #(= :gen-class (first %)) references)
+        ;ns-effect (clojure.core/in-ns name)
+        ]
+
+    `(def ~col-name (->m-collection ~mongo-col-name))))
 
 (defn find-one-as-tmap [mcoll ref]
   "Variation on find-one-as-map, returning a map with a :type entry collection name"

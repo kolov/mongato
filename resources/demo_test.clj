@@ -1,4 +1,4 @@
-(ns mongato.demo
+(ns mongato.demo_test
   (:require [mongato.core]
             )
   )

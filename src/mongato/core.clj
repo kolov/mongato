@@ -37,43 +37,63 @@
   (connect-with-params (conf location)))
 
 
-
-;; Maps with type key
-
-(def TYPE ::type)
+;; Type metainfo
+;;  "A Mongato collection consists of a
+;;           - mongo collection name
+;;           - render info"
+(defrecord mongato [colname renderinfo])
 
 (defn mark-type
-  "Adds a :type entry"
-  [map type] (vary-meta map TYPE type))
+  "attach mongato metainfo to an object"
+  [object mong] (vary-meta map assoc ::mongato mong))
 
 
-(defrecord m-collection [mongo-col-name])
+(defn replace-if-nil [val new-val] (if val val new-val))
+
+(defn check-refs [refs minimum]
+  (when (< (count refs) minimum)
+    (throw (Exception. (str "Mimimum " minimum " elements expected after " (first refs) ", found " refs)))
+    ))
+
+(defn add-to-set [m refs]
+  "Ad to a set value in a map"
+  (check-refs refs 2)
+  (let [val (second refs)
+        kw (first refs)
+        m (update-in m [kw] replace-if-nil #{})]
+    (if (set? val) (update-in m [kw] clojure.set/union val)
+                   (update-in m [kw] conj val))))
 
 
-(defmacro defdata [col-name & references]
-  (let [process-reference
-        (fn [[kname & args]]
-          `(~(symbol "clojure.core" (clojure.core/name kname))
-            ~@(map #(list 'quote %) args)))
-        mongo-col-name-string (when (string? (first references)) (first references))
-        references (if mongo-col-name-string (next references) references)
-        mongo-col-name (if mongo-col-name-string
-                         mongo-col-name-string
-                         (str col-name))
-        metadata (when (map? (first references)) (first references))
-        references (if metadata (next references) references)
-        name (if metadata
-               (vary-meta name merge metadata)
-               name)
-        gen-class-clause (first (filter #(= :gen-class (first %)) references))
-        gen-class-call
-        (when gen-class-clause
-          (list* `gen-class :name (.replace (str name) \- \_) :impl-ns name :main true (next gen-class-clause)))
-        references (remove #(= :gen-class (first %)) references)
-        ;ns-effect (clojure.core/in-ns name)
-        ]
 
-    `(def ~col-name (->m-collection ~mongo-col-name))))
+(defn process-references [renderinfo references]
+  (let [throw-error (fn [s] (throw (Exception. (str "One of :hide :by-type :by-name expected here, but [" s "] found instead."))))]
+    (loop [ri renderinfo refs references]
+
+      (if (not (= 0 (count refs)))
+        (let [firstref (first refs)]
+          (cond
+            (not (keyword? firstref)) (throw-error firstref)
+            ; hide expects one parameter keyword or a sequence
+            (= :hide firstref) (recur (add-to-set ri refs) (drop 2 refs))
+            :default (throw-error firstref)
+            ))
+        ri))))
+
+(defmacro defdata [name & references]
+  (let [
+         ; first optional parameter is collection name
+         colname (when (string? (first references)) (first references))
+         references (if colname (next references) references)
+         colname (if colname colname (str name))
+         ; optional renderinfo
+         renderinfo (when (map? (first references)) (first references))
+         references (if renderinfo (next references) references)
+         renderinfo (if renderinfo renderinfo {})
+         ; optional renderinfo pairs/triples
+         renderinfo (process-references renderinfo references)
+         ]
+    `(def ~name (->mongato ~colname ~renderinfo))))
 
 (defn find-one-as-tmap [mcoll ref]
   "Variation on find-one-as-map, returning a map with a :type entry collection name"
@@ -95,6 +115,26 @@
   "Get record by field f-name"
   (let [result (find-one-as-tmap table {f-name f-val})]
     result))
+
+(defn render [object metainfo]
+  (let [keys-to-hide (:hide metainfo #{})
+        fn-by-name (:by-name metainfo {})
+        fn-by-type (:by-type metainfo {})
+
+        object (reduce (fn [m k] (dissoc m k))
+                       object keys-to-hide)
+        object (reduce (fn [m [k f]]
+                         (let [curval (k m)] (if curval (assoc m k (f curval)) m)))
+                       object fn-by-name)
+        object (reduce (fn [m [k v]] (let [f (get fn-by-type (class v) identity)] (assoc m k (f v))))
+
+                       {} object)
+
+        ]
+
+    object
+    )
+  )
 
 
 

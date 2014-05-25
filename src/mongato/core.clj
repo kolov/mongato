@@ -55,14 +55,33 @@
     (throw (Exception. (str "Mimimum " minimum " elements expected after " (first refs) ", found " refs)))
     ))
 
-(defn add-to-set [m refs]
-  "Ad to a set value in a map"
+(defn add-as-set [m refs]
+  "Add to the current set value in a map or create a new set.
+  (first refs) is the key
+  (second refs) is the value: if set, merge both sets, otherwise add.
+  Example: (add-as-set {:a #{:x}} [:a :b]) => {:a #{:b :x}}"
   (check-refs refs 2)
   (let [val (second refs)
         kw (first refs)
         m (update-in m [kw] replace-if-nil #{})]
     (if (set? val) (update-in m [kw] clojure.set/union val)
                    (update-in m [kw] conj val))))
+
+(defn add-as-map [m refs]
+  "Add to the current map value in a map or create a new map.
+  (first refs) is the key
+  (second refs) is the value: if map, merge both maps, otherwise this is a key in the second map, in which case
+  (third refs) will be the value"
+  (check-refs refs 2)
+  (let [e2 (second refs)
+        kw (first refs)
+        m (update-in m [kw] replace-if-nil {})]
+    (if (map? e2)
+      [(drop 2 refs) (update-in m [kw] merge e2)]
+      (do (check-refs refs 3)
+          (let [e3 (nth refs 2)]
+            (when (not (keyword? e2)) (throw (Exception. "Map or keyword expected here")))
+            [(drop 3 refs) (update-in m [kw] assoc e2 e3)] )))))
 
 
 
@@ -75,7 +94,8 @@
           (cond
             (not (keyword? firstref)) (throw-error firstref)
             ; hide expects one parameter keyword or a sequence
-            (= :hide firstref) (recur (add-to-set ri refs) (drop 2 refs))
+            (= :hide firstref) (recur (add-as-set ri refs) (drop 2 refs))
+            (contains? #{:by-name :by-type} firstref) (let[[therest result] (add-as-map ri refs)] (recur result  therest))
             :default (throw-error firstref)
             ))
         ri))))

@@ -31,12 +31,25 @@
       => {:a 22 :s "xx-str"}
       )
 
-(fact "addin ellement to a set value"
-      (add-to-set {:a #{:x}} [:a :b]) => {:a #{:b :x}}
-      (add-to-set {:a #{}} [:a :b]) => {:a #{:b}}
-      (add-to-set {} [:a :b]) => {:a #{:b}}
+(fact "adding ellement to a set value"
+      (add-as-set {:a #{:x}} [:a :b]) => {:a #{:b :x}}
+      (add-as-set {:a #{}} [:a :b]) => {:a #{:b}}
+      (add-as-set {} [:a :b]) => {:a #{:b}}
+
+      (add-as-set {} [:a]) => (throws Exception)
+      )
+
+
+(fact "addin ellement to a map value"
+      (add-as-map {} [:a {:b :c} :d]) => ['(:d) {:a {:b :c}}]
+      (add-as-map {} [:a :b :c :d]  ) => ['(:d) {:a {:b :c}}]
+      (add-as-map {} [:a "b" :c]) => (throws Exception)
+      (add-as-map {} [:a :b]) => (throws Exception)
+      (add-as-map {} [:a]) => (throws Exception)
 
       )
+
+
 (fact "creating mongato with name"
       (do (defdata x) (:colname x)) => "x"
       (do (defdata x "y") (:colname x)) => "y"
@@ -45,7 +58,7 @@
       )
 
 (fact "Exceptions when references length wrong"
-      (check-refs [:a 2] 3) => (throws Exception )
+      (check-refs [:a 2] 3) => (throws Exception)
       (check-refs [:a 2] 2) => nil
       )
 
@@ -68,7 +81,25 @@
 
 (defn fn1 [x] x)
 (fact "Processing by-type"
-      (process-references {} [:by-name :a fn1]) => {:x :y :by-name {:a fn1}}
+      (process-references {} [:by-name :a fn1]) => {:by-name {:a fn1}}
+      (process-references {:x :y} [:by-name :a fn1]) => {:x :y :by-name {:a fn1}}
+
+      (process-references {} [:by-name :a fn1 :hide :c]) => {:by-name {:a fn1} :hide #{:c}}
+      (process-references {} [:by-name :a fn1 :hide :c :by-type :d fn1]) => {:by-name {:a fn1} :hide #{:c} :by-type {:d fn1}}
+      (process-references {} [:by-name :a fn1 :hide :c :by-type {:d fn1}]) => {:by-name {:a fn1} :hide #{:c} :by-type {:d fn1}}
 
       )
+
+(defdata x1)
+(defdata x2 "y2")
+(defdata x3 "y3" :hide :a :by-name :b fn1 :by-name {:d fn1} :by-type :e fn1)
+
+(fact "defdata executed ok"
+      (:colname x1) => "x1"
+      (:colname x2) => "y2"
+      (:colname x3) => "y3"
+      (:renderinfo x3)    => {:hide #{:a} :by-name {:b fn1 :d fn1} :by-type {:e fn1}}
+      )
+
+
 

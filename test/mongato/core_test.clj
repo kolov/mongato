@@ -10,6 +10,7 @@
       (render {:a 1 :b 2} {:hide #{:a :B}}) => {:b 2}
       (render {:a 1 :b 2} {:hide #{}}) => {:a 1 :b 2}
       (render {:a 1 :b 2} {}) => {:a 1 :b 2}
+      (render {:a 1 :b 2} nil) => {:a 1 :b 2}
       )
 
 (fact "rendering :by-name"
@@ -93,12 +94,20 @@
 (defdata x1)
 (defdata x2 "y2")
 (defdata x3 "y3" :hide :a :by-name :b fn1 :by-name {:d fn1} :by-type :e fn1)
+(defdata x4 {   :by-name { } :by-type { }})
 
 (fact "defdata executed ok"
       (:colname x1) => "x1"
       (:colname x2) => "y2"
       (:colname x3) => "y3"
-      (:renderinfo x3)    => {:hide #{:a} :by-name {:b fn1 :d fn1} :by-type {:e fn1}}
+      (:renderinfo x3) => {:hide #{:a} :by-name {:b fn1 :d fn1} :by-type {:e fn1}}
+      )
+
+(fact "attaching meta info"
+      (get-type (mark-type {} x4)) => x4
+      )
+(fact "rendered according to defdata"
+      (render (mark-type {:a 1 :b 2} x4)) => {:b 4}
       )
 
 

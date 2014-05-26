@@ -45,8 +45,9 @@
 
 (defn mark-type
   "attach mongato metainfo to an object"
-  [object mong] (vary-meta map assoc ::mongato mong))
+  [object mongato] (vary-meta map assoc ::mongato mongato))
 
+(defn get-type[object] (-> object meta ::mongato))
 
 (defn replace-if-nil [val new-val] (if val val new-val))
 
@@ -136,10 +137,11 @@
   (let [result (find-one-as-tmap table {f-name f-val})]
     result))
 
-(defn render [object metainfo]
-  (let [keys-to-hide (:hide metainfo #{})
-        fn-by-name (:by-name metainfo {})
-        fn-by-type (:by-type metainfo {})
+(defn render
+  ([object renderinfo]
+  (let [keys-to-hide (:hide renderinfo #{})
+        fn-by-name (:by-name renderinfo {})
+        fn-by-type (:by-type renderinfo {})
 
         object (reduce (fn [m k] (dissoc m k))
                        object keys-to-hide)
@@ -147,13 +149,13 @@
                          (let [curval (k m)] (if curval (assoc m k (f curval)) m)))
                        object fn-by-name)
         object (reduce (fn [m [k v]] (let [f (get fn-by-type (class v) identity)] (assoc m k (f v))))
-
                        {} object)
 
         ]
-
     object
-    )
+    ))
+  ([object]
+   (let[renderinfo (-> object get-type :renderinfo)] (if renderinfo (render object renderinfo) (throw (Exception. "No renderinfo found")))))
   )
 
 

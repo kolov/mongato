@@ -1,11 +1,11 @@
 (ns mongato.core
-  (:import (com.mongodb MongoClient)
-           (java.math BigInteger))
+  (:import
+    (java.math BigInteger))
   (:require [monger.core :as mg]
             [monger.collection :as mc]
             [monger.conversion :refer [from-db-object ConvertToDBObject]]
             [monger.operators :refer :all]
-            [clojure.java.io :as io]
+
             [mongato.util :refer :all]
             [clojure.core.typed :refer :all]
             )
@@ -18,35 +18,27 @@
   )
 
 
-;; Configure & Connect ::
-
-(defn conf [location]
-  (try (binding [*read-eval* false]
-         (with-open [r (io/reader (io/resource location))]
-           (read (PushbackReader. r))))
-       (catch Exception e (println "Could not read resource " location))))
-
-(defn connect-with-params [db-config]
-  "Connect to Mongodb from a map with parameters"
-  (mg/connect! (merge {:host "localhost" :port 27017} db-config))
-  (mg/authenticate (mg/get-db (:db db-config)) (:username db-config) (.toCharArray (:password db-config)))
-  (mg/set-db! (mg/get-db (:db db-config))))
-
-(defn connect-from-settings [location]
-  "Connect to Mongodb with parameters from a file at location"
-  (connect-with-params (conf location)))
-
-
 ;; Type metainfo
 ;;  "A Mongato collection consists of a
 ;;           - mongo collection name
 ;;           - render info"
 (defrecord mongato [colname renderinfo])
 
-(defn mark-type
+(defn mark-object
   "attach mongato metainfo to an object"
-  [object mong] (vary-meta map assoc ::mongato mong))
+  [object mong] (vary-meta object assoc ::mongato mong))
 
+(defn mark-sequence
+  "attach mongato metainfo to a seq of objects"
+  [mcoll mong]
+  (let [marked (map #(mark-object % mong) mcoll)]
+    (vary-meta marked assoc ::mongato-collection true)))
+
+(defn marked-sequence? [s]
+  "true if the sequence was marked as containing mangatos"
+  (-> s meta ::mongato-collection))
+
+(defn get-mongato [x] (-> x meta ::mongato))
 
 (defn replace-if-nil [val new-val] (if val val new-val))
 
@@ -81,7 +73,7 @@
       (do (check-refs refs 3)
           (let [e3 (nth refs 2)]
             (when (not (keyword? e2)) (throw (Exception. "Map or keyword expected here")))
-            [(drop 3 refs) (update-in m [kw] assoc e2 e3)] )))))
+            [(drop 3 refs) (update-in m [kw] assoc e2 e3)])))))
 
 
 
@@ -95,7 +87,7 @@
             (not (keyword? firstref)) (throw-error firstref)
             ; hide expects one parameter keyword or a sequence
             (= :hide firstref) (recur (add-as-set ri refs) (drop 2 refs))
-            (contains? #{:by-name :by-type} firstref) (let[[therest result] (add-as-map ri refs)] (recur result  therest))
+            (contains? #{:by-name :by-type} firstref) (let [[therest result] (add-as-map ri refs)] (recur result therest))
             :default (throw-error firstref)
             ))
         ri))))
@@ -115,26 +107,6 @@
          ]
     `(def ~name (->mongato ~colname ~renderinfo))))
 
-(defn find-one-as-tmap [mcoll ref]
-  "Variation on find-one-as-map, returning a map with a :type entry collection name"
-  (if-let [found (mc/find-one-as-map (:mongo-col-name mcoll) ref)] (mark-type found mcoll)))
-
-(defn find-tmaps
-  ([mcoll ref & fields]
-   "Variation on find-maps, returning maps with a :type entry"
-   (map #(mark-type % mcoll) (apply mc/find-maps (:mongo-col-name mcoll) ref fields)))
-  )
-
-(defn save-and-return-tmap
-  [mcoll doc]
-  "Variation on save-and-return, returning map with a :type entry"
-  (-> (mc/save-and-return (:mongo-col-name mcoll) doc) (mark-type mcoll)))
-
-
-(defn get-doc-by-field [table f-name f-val]
-  "Get record by field f-name"
-  (let [result (find-one-as-tmap table {f-name f-val})]
-    result))
 
 (defn render [object metainfo]
   (let [keys-to-hide (:hide metainfo #{})
@@ -155,6 +127,15 @@
     object
     )
   )
+
+(defn printm [x]
+  (if-let [renderinfo (:renderinfo (get-mongato x))]
+    (print (render x renderinfo))
+    (if (marked-sequence? x)
+      (do (print "[")
+          (doseq [object x] (printm object))
+          (print "]"))
+      (print x))))
 
 
 

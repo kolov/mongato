@@ -3,8 +3,20 @@
             [mongato.core :refer :all]
             [midje.sweet :refer :all]))
 
-(fact "config file read"
-      (-> (conf "test-conf.clj") :key1) => 1)
+
+(defdata x)
+(fact "Marked objects and sequences"
+      (mark-object {} x) => {}
+      (get-mongato (mark-object {} x)) => x
+      (let [unmarked [{:a 1} {:a 2}]
+            marked (mark-sequence unmarked x)]
+        (mark-sequence unmarked x) => unmarked
+        (marked-sequence? unmarked) => falsey
+        (marked-sequence? marked) => true
+        (-> marked first get-mongato) => x
+        )
+
+      )
 
 (fact "rendering :hide"
       (render {:a 1 :b 2} {:hide #{:a :B}}) => {:b 2}
@@ -42,7 +54,7 @@
 
 (fact "addin ellement to a map value"
       (add-as-map {} [:a {:b :c} :d]) => ['(:d) {:a {:b :c}}]
-      (add-as-map {} [:a :b :c :d]  ) => ['(:d) {:a {:b :c}}]
+      (add-as-map {} [:a :b :c :d]) => ['(:d) {:a {:b :c}}]
       (add-as-map {} [:a "b" :c]) => (throws Exception)
       (add-as-map {} [:a :b]) => (throws Exception)
       (add-as-map {} [:a]) => (throws Exception)
@@ -79,7 +91,8 @@
 
       )
 
-(defn fn1 [x] x)
+(defn fn1 [x] (str "-" x "-"))
+
 (fact "Processing by-type"
       (process-references {} [:by-name :a fn1]) => {:by-name {:a fn1}}
       (process-references {:x :y} [:by-name :a fn1]) => {:x :y :by-name {:a fn1}}
@@ -94,12 +107,32 @@
 (defdata x2 "y2")
 (defdata x3 "y3" :hide :a :by-name :b fn1 :by-name {:d fn1} :by-type :e fn1)
 
+
 (fact "defdata executed ok"
       (:colname x1) => "x1"
       (:colname x2) => "y2"
       (:colname x3) => "y3"
-      (:renderinfo x3)    => {:hide #{:a} :by-name {:b fn1 :d fn1} :by-type {:e fn1}}
+      (:renderinfo x3) => {:hide #{:a} :by-name {:b fn1 :d fn1} :by-type {:e fn1}}
       )
+
+(defdata some-data :by-name :c fn1)
+
+
+
+(fact "printm"
+      (let [
+             unmarked-object {:c 1}
+             marked-object (mark-object unmarked-object some-data)
+             unmarked-seq [unmarked-object]
+             marked-seq (mark-sequence unmarked-seq some-data)
+             ]
+        (with-out-str (printm unmarked-object)) => "{:c 1}"
+        (with-out-str (printm marked-object)) => "{:c -1-}"
+
+        (with-out-str (printm unmarked-seq)) => "[{:c 1}]"
+        (with-out-str (printm marked-seq)) => "[{:c -1-}]"
+
+        ))
 
 
 

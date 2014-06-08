@@ -1,4 +1,4 @@
-(defproject com.akolov/mongato "0.2.0-SNAPSHOT"
+(defproject com.akolov/mongato "0.2.0"
   :description "Adding metainfo to Monger maps "
   :url "https://github.com/kolov/mongato"
   :license {:name "Eclipse Public License"

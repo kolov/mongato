@@ -8,22 +8,31 @@ Adds metainfo to maps returned by monger for custimized rendering.
 
 ### Using Monger
 
-    mongato.core=> (mc/save-and-return "people" { :_id (ObjectId.) :uuid (mongato.util/uuid) :first_name "John" :last_name "Lennon" }) 
-    (mc/save-and-return "people" { :_id (ObjectId.) :uuid (mongato.util/uuid) :first_name "John" :last_name "Lennon" })
-    {:last_name "Lennon", :first_name "John", :uuid "98a77f4dc328f58a26b3bdf72630b209cbb8e1c1", :_id #<ObjectId 53937508036402735f5a7b2a>}
-    mongato.core=> (mc/find-maps "people" {})
-    ( {:_id #<ObjectId 53937508036402735f5a7b2a>, :uuid "98a77f4dc328f58a26b3bdf72630b209cbb8e1c1", :first_name "John", :last_name "Lennon"})
-
+```clojure
+; Connect to MongoDB and authenticate
+; Insert a new document the usual way
+mongato.core=> (mc/save-and-return "people" { :_id (ObjectId.) :uuid (mongato.util/uuid) :first_name "John" :last_name "Lennon" }) 
+; See what objects are in 'people' 
+mongato.core=> (mc/find-maps "people" )
+( {:_id #<ObjectId 53937508036402735f5a7b2a>, :uuid "98a77f4dc328f58a26b3bdf72630b209cbb8e1c1", 
+:first_name "John", :last_name "Lennon"})
+; A bit too verbose, a lot of information I don't need to see here
+```
 
 ### Using Monger + Mongato
 
-    (connect-from-settings "mongodb-config.clj")
-    mongato.core=> (defdata people :hide :_id :by-name :uuid mongato.render/render-last4)
-    #'mongato.core/people
-    mongato.core=> (save-and-return-tmap people { :_id (ObjectId.) :uuid (mongato.util/uuid) :first_name "John" :last_name "Lennon" })
-    {:last_name "Lennon", :first_name "John", :uuid "193c772239236d57a7d45de5586e79de44929b18", :_id #<ObjectId 539377270364c0701d6697d6>}
-    mongato.core=> (printm (find-tmaps people))
-    ({:last_name Lennon, :first_name John, :uuid ..dc6b})
+```clojure
+; Connect from setttings in a file
+mongato.core=>(connect-from-settings "mongodb-config.clj")
+; define the data 
+mongato.core=> (defdata people :hide :_id :by-name :uuid mongato.render/render-last4)
+; Insert a object
+mongato.core=> (save-and-return-tmap people { :_id (ObjectId.) :uuid (mongato.util/uuid) :first_name "John" :last_name "Lennon" })
+; See what is there
+mongato.core=> (printm (find-tmaps people))
+({:last_name Lennon, :first_name John, :uuid ..dc6b})
+; the object rendered as defined in defdata
+```
     
 ## License
 

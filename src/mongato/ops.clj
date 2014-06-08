@@ -15,7 +15,6 @@
            )
   )
 
-
 ;; Configure & Connect ::
 
 (defn conf [location]

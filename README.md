@@ -26,7 +26,8 @@ mongato.core=> (mc/find-maps "people" )
 ; Connect from setttings in a file
 mongato.core=>(connect-from-settings "mongodb-config.clj")
 ; define the data 
-mongato.core=> (defdata people :hide :_id :by-name :uuid mongato.render/render-last4)
+mongato.core=> (defdata people :hide :_id 
+                               :by-name :uuid mongato.render/render-last4)
 ; Insert a object
 mongato.core=> (save-and-return-tmap people { :_id (ObjectId.) :uuid (mongato.util/uuid) 
     :first_name "John" :last_name "Lennon" })

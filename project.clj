@@ -1,4 +1,4 @@
-(defproject com.akolov/mongato "0.1.0-SNAPSHOT"
+(defproject com.akolov/mongato "0.1.0"
   :description "Adding metainfo to Monger maps "
   :url "https://github.com/kolov/mongato"
   :license {:name "Eclipse Public License"
@@ -12,7 +12,8 @@
                     :test-paths   ["test"]
                     :plugins      [[lein-deps-tree "0.1.2"]
                                    [lein-midje "3.1.3"]
-                                   [test2junit "1.0.1"]]
+                                   [test2junit "1.0.1"]
+                                   [lein-release "1.0.5"]]
                     }
               }
   )

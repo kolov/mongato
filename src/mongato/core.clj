@@ -17,19 +17,21 @@
 
 
 ;; Type metainfo
-;;  "A Mongato collection consists of a
+;;  A Mongato consists of a
 ;;           - mongo collection name
-;;           - render info"
+;;           - renderinfo
 (defrecord mongato [colname renderinfo])
+(defn get-colname [m] (if-let [colname (:colname m)] colname (throw (Exception. (str m " has no :colname. Is it a mongato?")))))
 
-(defn get-all-mongatos [ns]
+(defn all-mongatos [ns]
   (->> (seq (ns-publics ns))
        (filter (fn [[k v]] (= "mongato.core.mongato" (.getName (class (var-get v))))))
-       (map first)
+       (map (fn [[k v]] [k (var-get v)]))
        ))
 
+(defn all-collection-names[ns]
+  (map (fn [[_ v]] (get-colname v)) (all-mongatos ns)))
 
-(defn get-colname [m] (if-let [colname (:colname m)] colname (throw (Exception. (str m " has no :colname. Is it a mongato?")))))
 
 (defn mark-object
   "attach mongato metainfo to an object"
@@ -115,7 +117,7 @@
     `(def ~name (->mongato ~colname ~renderinfo))))
 
 
-(defn render [object metainfo]
+(defn apply-renderinfo [object metainfo]
   (let [keys-to-hide (:hide metainfo #{})
         fn-by-name (:by-name metainfo {})
         fn-by-type (:by-type metainfo {})
@@ -135,18 +137,16 @@
     )
   )
 
-(defn strm [x]
-  "renders to string"
+(defn render [x]
+  "converts to renderable form"
   (if-let [renderinfo (:renderinfo (get-mongato x))]
-    (render x renderinfo)
+    (apply-renderinfo x renderinfo)
     (if (marked-sequence? x)
-      (str "("
-           (apply str (map strm x))
-           ")")
-      (str x))))
+      (map render x)
+      x)))
 
 (defn printm [x]
-  (print (strm x)))
+  (print (render x)))
 
 
 

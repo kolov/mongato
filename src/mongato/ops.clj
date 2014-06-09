@@ -70,5 +70,8 @@
 (defn update-by-id [mongato id document]
   (mc/update-by-id (get-colname mongato) id document))
 
+(defn remove-by-id[ mongato id]
+  (mc/remove-by-id (get-colname mongato) id))
+
 (defn find-tmap-by-id [mongato id]
   (mc/find-map-by-id (get-colname mongato) id))

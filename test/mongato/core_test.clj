@@ -19,21 +19,21 @@
       )
 
 (fact "rendering :hide"
-      (render {:a 1 :b 2} {:hide #{:a :B}}) => {:b 2}
-      (render {:a 1 :b 2} {:hide #{}}) => {:a 1 :b 2}
-      (render {:a 1 :b 2} {}) => {:a 1 :b 2}
+      (apply-renderinfo {:a 1 :b 2} {:hide #{:a :B}}) => {:b 2}
+      (apply-renderinfo {:a 1 :b 2} {:hide #{}}) => {:a 1 :b 2}
+      (apply-renderinfo {:a 1 :b 2} {}) => {:a 1 :b 2}
       )
 
 (fact "rendering :by-name"
-      (render {:a 1 :b 2} {:by-name {:a #(* 2 %)}}) => {:a 2 :b 2}
+      (apply-renderinfo {:a 1 :b 2} {:by-name {:a #(* 2 %)}}) => {:a 2 :b 2}
       )
 
 (fact "rendering :by-type"
-      (render {:a "a" :b 1} {:by-type {java.lang.String #(str "xx-" %)}}) => {:a "xx-a" :b 1}
+      (apply-renderinfo {:a "a" :b 1} {:by-type {java.lang.String #(str "xx-" %)}}) => {:a "xx-a" :b 1}
       )
 
 (fact "rendering all"
-      (render {:_id 1 :a 11 :s "str"}
+      (apply-renderinfo {:_id 1 :a 11 :s "str"}
               {
                 :hide    #{:_id}
                 :by-name {:a #(* 2 %)}

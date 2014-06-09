@@ -6,5 +6,5 @@
   )
 
 (fact "render-last4 renders ok"
-      (count (-> (org.bson.types.ObjectId.) render-last4)) => 6
+      (count (-> (org.bson.types.ObjectId.) last4)) => 6
       )

@@ -1,18 +1,17 @@
 (ns mongato.util
-  (:import (com.mongodb MongoClient)
-           (java.math BigInteger))
   (:require [monger.core :as mg]
             [monger.collection :as mc]
             [monger.conversion :refer [from-db-object ConvertToDBObject]]
             [monger.operators :refer :all]
             [clojure.java.io :as io]
-            [clojure.core.typed :refer :all]
             )
   (:import [com.mongodb MongoOptions ServerAddress]
            [org.bson.types ObjectId]
            (java.io PushbackReader)
            (java.security MessageDigest)
            (com.mongodb MongoClient)
+           (com.mongodb MongoClient)
+           (java.math BigInteger)
            )
   )
 

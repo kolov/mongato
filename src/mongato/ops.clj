@@ -36,18 +36,23 @@
 ;; Mongatos
 
 
-(defn find-one-as-tmap [mongato ref]
+(defn find-one-as-tmap
   "Variation on find-one-as-map, returning result with metatinfo"
-  (if-let [found (mc/find-one-as-map (:colname mongato) ref)] (mark-object found mongato)))
+  ([mongato ref]
+   (mark-object (mc/find-one-as-map (get-colname mongato) ref) mongato))
+  ([mongato ref fields]
+   (mark-object (mc/find-one-as-map (get-colname mongato) ref fields) mongato))
+  ([mongato ref fields keywordize]
+   (mark-object (mc/find-one-as-map (get-colname mongato) ref fields keywordize) mongato)))
 
 (defn find-tmaps
   "Variation on find-maps, returning result with metatinfo"
   ([mongato]
-   (mark-sequence (mc/find-maps (:colname mongato)) mongato))
+   (mark-sequence (mc/find-maps (get-colname mongato)) mongato))
   ([mongato ref]
-   (mark-sequence (mc/find-maps (:colname mongato) ref) mongato))
+   (mark-sequence (mc/find-maps (get-colname mongato) ref) mongato))
   ([mongato ref & fields]
-   (mark-sequence (apply mc/find-maps (:colname mongato) ref fields) mongato))
+   (mark-sequence (apply mc/find-maps (get-colname mongato) ref fields) mongato))
   )
 
 
@@ -61,3 +66,9 @@
   "Get record by field f-name"
   (let [result (find-one-as-tmap table {f-name f-val})]
     result))
+
+(defn update-by-id [mongato id document]
+  (mc/update-by-id (get-colname mongato) id document))
+
+(defn find-tmap-by-id [mongato id]
+  (mc/find-map-by-id (get-colname mongato) id))

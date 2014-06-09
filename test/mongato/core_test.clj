@@ -130,7 +130,7 @@
         (with-out-str (printm marked-object)) => "{:c -1-}"
 
         (with-out-str (printm unmarked-seq)) => "[{:c 1}]"
-        (with-out-str (printm marked-seq)) => "[{:c -1-}]"
+        (with-out-str (printm marked-seq)) => "({:c -1-})"
 
         ))
 

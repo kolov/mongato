@@ -5,9 +5,7 @@
             [monger.collection :as mc]
             [monger.conversion :refer [from-db-object ConvertToDBObject]]
             [monger.operators :refer :all]
-
             [mongato.util :refer :all]
-            [clojure.core.typed :refer :all]
             )
   (:import [com.mongodb MongoOptions ServerAddress]
            [org.bson.types ObjectId]
@@ -24,9 +22,18 @@
 ;;           - render info"
 (defrecord mongato [colname renderinfo])
 
+(defn get-all-mongatos [ns]
+  (->> (seq (ns-publics ns))
+       (filter (fn [[k v]] (= "mongato.core.mongato" (.getName (class (var-get v))))))
+       (map first)
+       ))
+
+
+(defn get-colname [m] (if-let [colname (:colname m)] colname (throw (Exception. (str m " has no :colname. Is it a mongato?")))))
+
 (defn mark-object
   "attach mongato metainfo to an object"
-  [object mong] (vary-meta object assoc ::mongato mong))
+  [object mong] (if object (vary-meta object assoc ::mongato mong)))
 
 (defn mark-sequence
   "attach mongato metainfo to a seq of objects"
@@ -128,14 +135,18 @@
     )
   )
 
-(defn printm [x]
+(defn strm [x]
+  "renders to string"
   (if-let [renderinfo (:renderinfo (get-mongato x))]
-    (print (render x renderinfo))
+    (render x renderinfo)
     (if (marked-sequence? x)
-      (do (print "[")
-          (doseq [object x] (printm object))
-          (print "]"))
-      (print x))))
+      (str "("
+           (apply str (map strm x))
+           ")")
+      (str x))))
+
+(defn printm [x]
+  (print (strm x)))
 
 
 

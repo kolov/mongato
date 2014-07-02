@@ -6,6 +6,7 @@
             [monger.conversion :refer [from-db-object ConvertToDBObject]]
             [monger.operators :refer :all]
             [mongato.util :refer :all]
+            [clojure.pprint :refer [pprint]]
             )
   (:import [com.mongodb MongoOptions ServerAddress]
            [org.bson.types ObjectId]
@@ -147,6 +148,9 @@
 
 (defn printm [x]
   (print (render x)))
+
+(defn pprintm [x]
+  (pprint (render x)))
 
 
 

@@ -1,6 +1,6 @@
-(ns mongato.render-test
+(ns mongato.renderers-test
   (:require [clojure.test :refer :all]
-            [mongato.render :refer :all]
+            [mongato.renderers :refer :all]
             [midje.sweet :refer :all])
   (:import [org.bson.types ObjectId])
   )

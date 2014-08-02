@@ -64,7 +64,9 @@
 
 (defn get-doc-by-field [table f-name f-val]
   "Get record by field f-name"
+  (log/debug "get-doc with " f-name "=" f-val)
   (let [result (find-one-as-tmap table {f-name f-val})]
+    (log/debug "result " result)
     result))
 
 (defn update-by-id [mongato id document]

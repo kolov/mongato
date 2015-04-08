@@ -1,20 +1,11 @@
 (ns mongato.core
-  (:import
-    (java.math BigInteger))
-  (:require [monger.core :as mg]
-            [monger.collection :as mc]
-            [monger.conversion :refer [from-db-object ConvertToDBObject]]
-            [monger.operators :refer :all]
-            [mongato.util :refer :all]
-            [clojure.pprint :refer [pprint]]
-            )
-  (:import [com.mongodb MongoOptions ServerAddress]
-           [org.bson.types ObjectId]
-           (java.io PushbackReader)
-           (java.security MessageDigest)
-           (com.mongodb MongoClient)
-           )
-  )
+  (:require
+    [monger.operators :refer :all]
+    [mongato.util :refer :all]
+    [clojure.pprint :refer [pprint]]
+    ))
+
+
 
 
 ;; Type metainfo
@@ -30,7 +21,7 @@
        (map (fn [[k v]] [k (var-get v)]))
        ))
 
-(defn all-collection-names[ns]
+(defn all-collection-names [ns]
   (map (fn [[_ v]] (get-colname v)) (all-mongatos ns)))
 
 
@@ -104,17 +95,17 @@
 
 (defmacro defdata [name & references]
   (let [
-         ; first optional parameter is collection name
-         colname (when (string? (first references)) (first references))
-         references (if colname (next references) references)
-         colname (if colname colname (str name))
-         ; optional renderinfo
-         renderinfo (when (map? (first references)) (first references))
-         references (if renderinfo (next references) references)
-         renderinfo (if renderinfo renderinfo {})
-         ; optional renderinfo pairs/triples
-         renderinfo (process-references renderinfo references)
-         ]
+        ; first optional parameter is collection name
+        colname (when (string? (first references)) (first references))
+        references (if colname (next references) references)
+        colname (if colname colname (str name))
+        ; optional renderinfo
+        renderinfo (when (map? (first references)) (first references))
+        references (if renderinfo (next references) references)
+        renderinfo (if renderinfo renderinfo {})
+        ; optional renderinfo pairs/triples
+        renderinfo (process-references renderinfo references)
+        ]
     `(def ~name (->mongato ~colname ~renderinfo))))
 
 

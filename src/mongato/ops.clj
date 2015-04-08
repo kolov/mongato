@@ -1,20 +1,16 @@
 (ns mongato.ops
-  (:import (com.mongodb MongoClient)
-           (java.math BigInteger))
   (:require [monger.core :as mg]
             [monger.collection :as mc]
             [clojure.java.io :as io]
-            [monger.conversion :refer [from-db-object ConvertToDBObject]]
+            [monger.conversion :as conv]
             [monger.operators :refer :all]
             [mongato.core :refer :all]
             [jota.core :as log]
             )
   (:refer-clojure :exclude [remove])
-  (:import [com.mongodb MongoOptions ServerAddress]
-           [org.bson.types ObjectId]
-           (java.io PushbackReader)
-           (com.mongodb MongoClient)
-           (java.util Map))
+  (:import
+    (java.io PushbackReader)
+    (java.util Map))
   )
 
 ;; Configure & Connect ::

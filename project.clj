@@ -5,6 +5,7 @@
                       :url  "http://www.eclipse.org/legal/epl-v10.html"}
             :dependencies [[org.clojure/clojure "1.6.0"]
                            [com.novemberain/monger "1.4.2"]
+                           [jota "0.3.0-SNAPSHOT"]
                            ]
             :profiles {
                        :dev {:dependencies [[midje "1.6.3"]

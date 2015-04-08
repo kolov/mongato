@@ -7,12 +7,14 @@
             [monger.conversion :refer [from-db-object ConvertToDBObject]]
             [monger.operators :refer :all]
             [mongato.core :refer :all]
+            [jota.core :as log]
             )
+  (:refer-clojure :exclude [remove])
   (:import [com.mongodb MongoOptions ServerAddress]
            [org.bson.types ObjectId]
            (java.io PushbackReader)
            (com.mongodb MongoClient)
-           )
+           (java.util Map))
   )
 
 ;; Configure & Connect ::
@@ -71,6 +73,9 @@
 
 (defn update-by-id [mongato id document]
   (mc/update-by-id (get-colname mongato) id document))
+
+(defn remove [mongato ^Map conditions]
+  (mc/remove (get-colname mongato) conditions))
 
 (defn remove-by-id [mongato id]
   (mc/remove-by-id (get-colname mongato) id))

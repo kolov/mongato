@@ -2,7 +2,6 @@
   (:require [monger.core :as mg]
             [monger.collection :as mc]
             [clojure.java.io :as io]
-            [monger.conversion :as conv]
             [monger.operators :refer :all]
             [mongato.core :refer :all]
             [jota.core :as log]

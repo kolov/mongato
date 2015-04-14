@@ -79,7 +79,7 @@
   (mc/find-map-by-id (get-colname mongato) id))
 
 ;; shortcuts
-(defn mlist
-  ([mongato] (render (find-tmaps mongato)))
-  ([mongato ref] (render (find-tmaps mongato ref)))
+(defn pprintc
+  ([mongato] (pprintm (find-tmaps mongato)))
+  ([mongato ref] (pprintm (find-tmaps mongato ref)))
   )

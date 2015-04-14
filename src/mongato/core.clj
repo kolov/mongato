@@ -130,19 +130,21 @@
     )
   )
 
-(defn render [x]
+(defn render [m]
   "converts to renderable form"
-  (if-let [renderinfo (:renderinfo (get-mongato x))]
-    (apply-renderinfo x renderinfo)
-    (if (marked-sequence? x)
-      (map render x)
-      x)))
+  (if-let [renderinfo (:renderinfo (get-mongato m))]
+    (apply-renderinfo m renderinfo)
+    (if (marked-sequence? m)
+      (map render m)
+      m)))
 
-(defn printm [x]
-  (print (render x)))
+(defn printm [m]
+  (print (render m)))
 
-(defn pprintm [x]
-  (pprint (render x)))
+(defn pprintm [m]
+  (pprint (render m)))
+
+
 
 
 

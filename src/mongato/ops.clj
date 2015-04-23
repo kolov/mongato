@@ -48,8 +48,8 @@
    (mark-sequence (mc/find-maps (get-colname mongato)) mongato))
   ([mongato ref]
    (mark-sequence (mc/find-maps (get-colname mongato) ref) mongato))
-  ([mongato ref & fields]
-   (mark-sequence (apply mc/find-maps (get-colname mongato) ref fields) mongato))
+  ([mongato ref fields]
+   (mark-sequence (mc/find-maps (get-colname mongato) ref fields) mongato))
   )
 
 

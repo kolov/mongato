@@ -18,7 +18,7 @@
   (try (binding [*read-eval* false]
          (with-open [r (io/reader (io/resource location))]
            (read (PushbackReader. r))))
-       (catch Exception e (println "Could not read resource " location))))
+       (catch Exception _ (println "Could not read resource " location))))
 
 (defn connect-with-params [db-config]
   "Connect to Mongodb from a map with parameters"
@@ -59,12 +59,12 @@
   (-> (mc/save-and-return (:colname mcoll) doc) (mark-object mcoll)))
 
 
-(defn get-doc-by-field [table f-name f-val]
+(defn get-doc-by-field
   "Get record by field f-name"
-  (log/debug "get-doc with " f-name "=" f-val)
-  (let [result (find-one-as-tmap table {f-name f-val})]
-    (log/debug "result " result)
-    result))
+  ([table f-name f-val]
+   (find-one-as-tmap table {f-name f-val}))
+  ([table f-name f-val fields]
+   (find-one-as-tmap table {f-name f-val} fields)))
 
 (defn update-by-id [mongato id document]
   (mc/update-by-id (get-colname mongato) id document))

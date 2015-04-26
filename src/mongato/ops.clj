@@ -52,6 +52,8 @@
    (mark-sequence (mc/find-maps (get-colname mongato) ref fields) mongato))
   )
 
+(defn find-and-modify [mongato conditions document & keys]
+  (mc/find-and-modify (get-colname mongato) conditions document keys))
 
 (defn save-and-return-tmap
   [mcoll doc]
@@ -74,6 +76,9 @@
 
 (defn remove-by-id [mongato id]
   (mc/remove-by-id (get-colname mongato) id))
+
+(defn update
+  ([mongato conditions doc] (mc/update (get-colname mongato) conditions doc)))
 
 (defn find-tmap-by-id [mongato id]
   (mc/find-map-by-id (get-colname mongato) id))

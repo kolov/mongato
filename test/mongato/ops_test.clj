@@ -5,6 +5,7 @@
             [monger.collection :as mc]
             [midje.sweet :refer :all])
   (:import [org.bson.types ObjectId])
+  (:refer-clojure :exclude [remove])
   )
 
 

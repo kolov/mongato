@@ -9,11 +9,6 @@
   )
 
 
-
-
-;; missing utils
-; Copied from https://github.com/pmj/clojure-util/blob/master/util.clj
-
 (defn- repeat-str
   "Concatenate num repetitions of rep-sc."
   [rep-sc num]

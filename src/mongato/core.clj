@@ -3,24 +3,22 @@
     [monger.operators :refer :all]
     [mongato.util :refer :all]
     [clojure.pprint :refer [pprint]]
-    [clojure.set ]
+    [clojure.set]
     ))
-
-
 
 
 ;; Type metainfo
 ;;  A Mongato consists of a
 ;;           - mongo collection name
-;;           - renderinfo
-(defrecord mongato [colname renderinfo])
+;;           - properties
+(defrecord mongato [colname props])
 (defn get-colname [m] (if-let [colname (:colname m)] colname (throw (Exception. (str m " has no :colname. Is it a mongato?")))))
 
 (defn all-mongatos [ns]
   (->> (seq (ns-publics ns))
-       (filter (fn [[k v]] (= "mongato.core.mongato" (.getName (class (var-get v))))))
-       (map (fn [[k v]] [k (var-get v)]))
-       ))
+    (filter (fn [[k v]] (= "mongato.core.mongato" (.getName (class (var-get v))))))
+    (map (fn [[k v]] [k (var-get v)]))
+    ))
 
 (defn all-collection-names [ns]
   (map (fn [[_ v]] (get-colname v)) (all-mongatos ns)))
@@ -56,8 +54,8 @@
   Example: (add-as-set {:a #{:x}} [:a :b]) => {:a #{:b :x}}"
   (check-refs refs 2)
   (let [val (second refs)
-        kw (first refs)
-        m (update-in m [kw] replace-if-nil #{})]
+        kw  (first refs)
+        m   (update-in m [kw] replace-if-nil #{})]
     (if (set? val) (update-in m [kw] clojure.set/union val)
                    (update-in m [kw] conj val))))
 
@@ -69,7 +67,7 @@
   (check-refs refs 2)
   (let [e2 (second refs)
         kw (first refs)
-        m (update-in m [kw] replace-if-nil {})]
+        m  (update-in m [kw] replace-if-nil {})]
     (if (map? e2)
       [(drop 2 refs) (update-in m [kw] merge e2)]
       (do (check-refs refs 3)
@@ -78,61 +76,47 @@
             [(drop 3 refs) (update-in m [kw] assoc e2 e3)])))))
 
 
+(defn- throw-error [s]
+  (throw (Exception.
+           (str "Keyword expected here, but [" s "] found instead."))))
 
-(defn process-references [renderinfo references]
-  (let [throw-error (fn [s] (throw (Exception. (str "One of :hide :by-type :by-name expected here, but [" s "] found instead."))))]
-    (loop [ri renderinfo refs references]
-
-      (if (not (= 0 (count refs)))
-        (let [firstref (first refs)]
-          (cond
-            (not (keyword? firstref)) (throw-error firstref)
-            ; hide expects one parameter keyword or a sequence
-            (= :hide firstref) (recur (add-as-set ri refs) (drop 2 refs))
-            (contains? #{:by-name :by-type} firstref) (let [[therest result] (add-as-map ri refs)] (recur result therest))
-            :default (throw-error firstref)
-            ))
-        ri))))
+(defn process-references [references]
+  {:pre [(even? (count references))]}
+  (loop [ri {} references references]
+    (if (seq references)
+      (let [firstref (first references) secondref (second references)]
+        (if (keyword? firstref)
+          (recur (assoc ri firstref secondref) (drop 2 references))
+          (throw-error firstref)))
+      ri)))
 
 (defmacro defdata [name & references]
   (let [
         ; first optional parameter is collection name
-        colname (when (string? (first references)) (first references))
+        colname    (when (string? (first references)) (first references))
         references (if colname (next references) references)
-        colname (if colname colname (str name))
-        ; optional renderinfo
-        renderinfo (when (map? (first references)) (first references))
-        references (if renderinfo (next references) references)
-        renderinfo (if renderinfo renderinfo {})
-        ; optional renderinfo pairs/triples
-        renderinfo (process-references renderinfo references)
+        colname    (if colname colname (str name))
+
+        props      (process-references references)
         ]
-    `(def ~name (->mongato ~colname ~renderinfo))))
+    `(def ~name (->mongato ~colname ~props))))
 
 
-(defn apply-renderinfo [object metainfo]
-  (let [keys-to-hide (:hide metainfo #{})
-        fn-by-name (:by-name metainfo {})
-        fn-by-type (:by-type metainfo {})
+(defn apply-renderinfo [object renderinfo]
 
-        object (reduce (fn [m k] (dissoc m k))
-                       object keys-to-hide)
-        object (reduce (fn [m [k f]]
-                         (let [curval (k m)] (if curval (assoc m k (f curval)) m)))
-                       object fn-by-name)
-        object (reduce (fn [m [k v]] (let [f (get fn-by-type (class v) identity)] (assoc m k (f v))))
+  (apply assoc {} (flatten
+                    (remove nil?
+                      (map (
+                             fn [[k v]] (let [conversion (k renderinfo)
+                                              converted  (if conversion (conversion v) v)
+                                              ]
+                                          (if converted [k converted]))) object)))))
 
-                       {} object)
 
-        ]
-
-    object
-    )
-  )
 
 (defn render [m]
-  "converts to renderable form"
-  (if-let [renderinfo (:renderinfo (get-mongato m))]
+  "converts to readable form, according to renderer"
+  (if-let [renderinfo (-> (get-mongato m) :props :renderinfo)]
     (apply-renderinfo m renderinfo)
     (if (marked-sequence? m)
       (map render m)
@@ -143,6 +127,13 @@
 
 (defn pprintm [m]
   (pprint (render m)))
+
+(defn last4 [id]
+  "Renders only the end of an id, e.g.: ..NNNN"
+  (let [s (str id)]
+    (str ".." (apply str (drop (- (count s) 4) s)))
+    ))
+
 
 
 

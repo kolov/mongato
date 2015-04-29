@@ -1,6 +1,6 @@
 # mongato
 
-Attacjhes metainfo to maps returned by monger for not yet clear purposes. 
+Attaches metainfo to maps returned by monger for not yet clear purposes. 
 
 ## Example     
 

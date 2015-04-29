@@ -1,8 +1,6 @@
 # mongato
 
-An extention to Monger:
-
-Adds metainfo to maps returned by monger for custimized rendering.
+Attacjhes metainfo to maps returned by monger for not yet clear purposes. 
 
 ## Example     
 
@@ -20,14 +18,13 @@ mongato.core=> (mc/find-maps "people" )
 ; A bit too verbose, a lot of information I don't need to see here
 ```
 
-### Using Monger + Mongato
+### With Mongato
 
 ```clojure
 ; Connect from setttings in a file
 mongato.core=>(connect-from-settings "mongodb-config.clj")
 ; define the data 
-mongato.core=> (defdata people :hide :_id 
-                               :by-name :uuid mongato.render/render-last4)
+mongato.core=> (defdata people :renderinfo { :uuid render-last4, :_id (constantly nil)})
 ; Insert a object
 mongato.core=> (save-and-return-tmap people { :_id (ObjectId.) :uuid (mongato.util/uuid) 
     :first_name "John" :last_name "Lennon" })
@@ -38,8 +35,6 @@ mongato.core=> (printm (find-tmaps people))
 ```
     
 ## License
-
-Copyright © 2014 FIXME
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.

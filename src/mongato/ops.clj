@@ -80,8 +80,9 @@
 (defn update
   ([mongato conditions doc] (mc/update (get-colname mongato) conditions doc)))
 
-(defn find-tmap-by-id [mongato id]
-  (mc/find-map-by-id (get-colname mongato) id))
+(defn find-tmap-by-id
+  ([mongato id] (mc/find-map-by-id (get-colname mongato) id))
+  ([mongato id fields] (mc/find-map-by-id (get-colname mongato) id fields)))
 
 ;; shortcuts
 (defn pprintc
